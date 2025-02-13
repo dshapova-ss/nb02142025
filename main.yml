@@ -1,0 +1,86 @@
+---
+- name: Install and configure Elasticsearch
+  hosts: elasticsearch
+  become: yes
+  vars:
+    elasticsearch_version: "8.5.0"
+    es_heap_size: "1g"
+    es_cluster_name: "single-node-cluster"
+    es_node_name: "node-1"
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+
+    - name: Add Elasticsearch GPG key
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+
+    - name: Add Elasticsearch repository
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+        state: present
+
+    - name: Install Elasticsearch
+      apt:
+        name: elasticsearch={{ elasticsearch_version }}
+        state: present
+        update_cache: yes
+
+    - name: Configure Elasticsearch
+      template:
+        src: elasticsearch.yml.j2
+        dest: /etc/elasticsearch/elasticsearch.yml
+        owner: root
+        group: elasticsearch
+        mode: '0644'
+      notify: Restart Elasticsearch
+
+    - name: Configure JVM Heap Size
+      lineinfile:
+        path: /etc/elasticsearch/jvm.options
+        regexp: '^-Xms.*'
+        line: "-Xms{{ es_heap_size }}"
+      notify: Restart Elasticsearch
+
+    - name: Configure JVM Heap Size (Xmx)
+      lineinfile:
+        path: /etc/elasticsearch/jvm.options
+        regexp: '^-Xmx.*'
+        line: "-Xmx{{ es_heap_size }}"
+      notify: Restart Elasticsearch
+
+    - name: Enable and start Elasticsearch service
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart Elasticsearch
+      systemd:
+        name: elasticsearch
+        state: restarted
+
+- name: Verify Elasticsearch is running
+  hosts: elasticsearch
+  tasks:
+    - name: Check Elasticsearch status
+      uri:
+        url: http://localhost:9200
+        method: GET
+        return_content: yes
+      register: es_status
+      failed_when: es_status.status != 200
+    
+    - name: Show Elasticsearch status
+      debug:
+        msg: "Elasticsearch is running: {{ es_status.content }}"
