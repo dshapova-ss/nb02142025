@@ -19,7 +19,7 @@ jobs:
           sudo apt install -y ansible
 
       - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.ini playbook.yml
+        run: ansible-playbook -i hosts main.yml
 
       - name: Check Elasticsearch Status
         run: |
