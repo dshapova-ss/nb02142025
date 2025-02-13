@@ -1,0 +1,32 @@
+name: Deploy and Verify Elasticsearch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Run Ansible Playbook
+        run: ansible-playbook -i inventory.ini playbook.yml
+
+      - name: Check Elasticsearch Status
+        run: |
+          sleep 30  # Wait for Elasticsearch to start
+          if curl -s http://localhost:9200 | grep -q "You Know, for Search"; then
+            echo "Elasticsearch is running"
+          else
+            echo "Elasticsearch is not running"
+            exit 1
+          fi
