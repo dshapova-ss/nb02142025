@@ -1,0 +1,4 @@
+Created repo
+Created first ansible configuration
+Adapted playbook for elasticsearch
+Created github actions that test new configuration for integration
