@@ -30,3 +30,7 @@ jobs:
             echo "Elasticsearch is not running"
             exit 1
           fi
+
+      - name: Check Elasticsearch Status
+        run: |
+          curl -s http://localhost:9200
