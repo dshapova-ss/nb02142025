@@ -1,2 +1,4 @@
-[elasticsearch]
-localhost ansible_connection=local
+webservers:
+  hosts:
+    elasticsearch:
+      ansible_connection: local
